@@ -26,7 +26,7 @@ BlogpartsObject.browser = {
 };
 (function(){
   this.version = __version__;
-  this.prefix = 'bluestadium-';
+  this.prefix = 'blogparts-object-';
   this.isReady = false;
   this.__ready__ = [];
   this.__widget__ = {};

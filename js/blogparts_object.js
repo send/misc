@@ -1,7 +1,7 @@
 (function () {
 /**
  *
- * Copyright (C) 2008 bluestadium.projectblue.sony.jp
+ * Copyright (C) 2009 SAKAI, Kazuaki <kaz.july.7 at gmail.com>
  * Licensed under the MIT Licenses.
  *
  */

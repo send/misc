@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# settings
+COUNT_LIMIT=20
+CPU_LIMIT=750
+APP="/Applications/Adium.app"
+AWK="/usr/bin/awk"
+GREP="/usr/bin/grep"
+PS="/bin/ps"
+EXPR="/bin/expr"
+OPEN="/usr/bin/open"
+SLEEP="/bin/sleep"
+RM="/bin/rm"
+
+PSINFO=`$PS ux | $GREP $APP | $GREP -v $GREP`
+if [ -z "$PSINFO" ] ; then
+  $OPEN -a $APP
+fi
+
+PIDFILE=$1
+if [ -f $PIDFILE ] ; then
+  if [ -z "$PSINFO" ] ; then
+    echo "start supervising adium"
+  else
+    echo "supervisediumd is already running"
+  fi
+  exit 0
+fi
+trap "$RM -rf $PIDFILE; echo 'stopped supervisediumd'" EXIT
+echo $$ > $PIDFILE
+echo "start supervising adium"
+
+COUNT=0
+while [ 1 ] ; do
+  PSINFO=`$PS ux | $GREP $APP | $GREP -v $GREP`
+  PID=`echo $PSINFO | $AWK '{print $2}'`
+  CPU=`echo $PSINFO | $AWK '{print $3 * 10}'`
+  if [ $CPU -gt $CPU_LIMIT ] ; then
+    COUNT=`$EXPR $COUNT + 1`
+    if [ $COUNT -gt $COUNT_LIMIT ] ; then
+      kill $PID
+      $OPEN -a $APP
+      COUNT=0
+    fi
+  else
+    COUNT=0
+  fi
+  $SLEEP 1
+done

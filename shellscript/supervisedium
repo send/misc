@@ -1,0 +1,57 @@
+#!/bin/sh
+
+RM="/bin/rm"
+CAT="/bin/cat"
+OPEN="/usr/bin/open"
+WHOAMI="/usr/bin/whoami"
+SLEEP="/bin/sleep"
+
+
+PIDFILE="/tmp/supervisediumd.`$WHOAMI`"
+COMMAND="supervisediumd"
+
+case $1 in
+  "clean" )
+    echo "cleaning pidfile: $PIDFILE"
+    $RM -rf $PIDFILE
+    ;;
+  "start" | "" )
+    if [ -f $PIDFILE ] ; then
+      echo "supervisediumd is already running"
+      exit 0
+    else
+      $COMMAND $PIDFILE &
+      echo "starting supervisediumd $!"
+    fi
+    ;;
+  "stop" | "shutdown" )
+    echo "stopping supervisediumd..."
+    if [ -f $PIDFILE ] ; then
+      kill `$CAT $PIDFILE`
+    fi
+    ;;
+  "restart" )
+    echo "restarting supervisediumd..."
+    if [ -f $PIDFILE ] ; then
+      kill `$CAT $PIDFILE`
+    fi
+    while [ -f $PIDFILE ] ; do
+      $SLEEP 1
+    done
+    $COMMAND $PIDFILE &
+    ;;
+  * )
+    $CAT <<_EOT_
+usage:
+$0 [start|stop|shutdown|clean|restart]
+  start :
+    start supervisediumd
+  stop, shutdown :
+    shutdown supervisediumd
+  clean :
+    cleaning pidfile
+  restart :
+    restart supervisediumd
+_EOT_
+    ;;
+esac

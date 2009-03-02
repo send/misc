@@ -1,0 +1,132 @@
+" set preload
+"set cpt=sl
+set cpt=sflbS
+set wim=list:full
+set wop=auto
+
+set nextpattern+=next, 次(の)?ページ,→(\b)?,下一頁,Следующая,다음,次へ,Newer
+set previouspattern+=prev, 前(の)?ページ,(\b)?←,前へ,Older
+set editor=/Application/Vim.app -f
+
+set noerrorbells
+set visualbell
+highlight Bell display:none
+
+set history=10000
+set showtabline=2
+set! browser.tabs.tabMaxWidth=48
+set! browser.tabs.tabMinWidth=48
+set! browser.tabs.tabClipWidth=0
+set! browser.tabs.closeButtons=2
+set! browser.tabs.loadDivertedInBackground=true
+" set! javascript.options.strict=true
+" set! javascript.options.showInConsole=true
+set! network.dns.disableIPv6=true
+set! network.cookie.cookieBehavior=0
+set! browser.startup.homepage=about:blank
+set! browser.tabs.loadBookmarksInBackground=true
+set! browser.tabs.loadDivertedInBackground=true
+set! browser.tabs.maxOpenBeforeWarn=30000
+set! browser.tabs.warnOnClose=true
+set! browser.tabs.warnOnOpen=true
+set! browser.warnOnQuit=false
+set! browser.warnOnRestart=false
+set! browser.zoom.full=false
+set! browser.zoom.siteSpecific=false
+set! dom.popup_maximum=2000
+set! extensions.adblockplus.showinstatusbar=true
+set! general.warnOnAboutConfig=false
+set! general.autoScroll=false
+set! greasemonkey.editor=/Applications/Vim.app
+set! javascript.options.jit.chrome=true
+set! layout.spellcheckDefault=0
+set! ui.key.generalAccessKey=0
+colorscheme Sweets
+set go+=n
+
+map j 6<C-e>
+map k 6<C-y>
+map t :tabopen!<Space> 
+
+map ,s :so ~/.vimperatorrc<CR>
+map ,S :mapc<CR>:cmapc<CR>:imapc<CR>:so ~/.vimperatorrc<CR>
+
+" Quit
+map <M-q> ZZ
+imap <M-q> <ESC>ZZ
+cmap <M-q> ZZ
+
+
+"set verbose=8
+set verbose=1
+autocmd LocationChange .* :fmapc
+"autocmd GMActiveScript ldrize\.user\.js :js liberator.plugins.gmperator.currentSandbox.LDRize.watch('getSiteinfo' ,function() { liberator.plugins.feedKey.setup(["j","k","p","l","v","o","i","s"]); });
+" autocmd GMActiveScript .* :js if (liberator.plugins.gmperator.currentSandbox.LDRize.getSiteinfo()) liberator.plugins.feedKey.setup(["j","k","p","l","v","o","i","s"]);
+" autocmd GMActiveScript .* :js liberator.plugins.gmperator.currentSandbox.watch('LDRize', function(){ liberator.plugins.feedKey.setup(["j","k","p","l","v","o","i","s"]);});
+" autocmd LocationChange reader\\.livedoor\\.reader\\.com/reader :fmap! j k s o a g p v c r q w i
+"autocmd GMActiveScript ldrize\\.user\\.js :fmap! j k p l v o i s
+" autocmd LocationChange hatena\\.ne\\.jp :fmap j k p l v o i s
+" autocmd LocationChange twitter\\.com :fmap j k p l v o i s
+" autocmd LocationChange tumblr\\.com :fmap j k p l v o i s
+" autocmd LocationChange google\\.(?:com|co\\.jp) :fmap j k p l v o i s
+js <<EOT
+liberator.modules.autocommands.add('LocationChange', /reader\.livedoor\.com\/reader\//, ':js liberator.plugins.feedKey.setup(["j", "k", "s", "o", "a", "g", "p", "v", "c", "r", "<Space>", "<S-Space>", "z", "Z", "<" ,">", "q", "w", "i"]);');
+liberator.modules.autocommands.add('GMActiveScript', /.*/, ':js setTimeout(function(){ if (liberator.plugins.gmperator.currentSandbox.LDRize.getSiteinfo()) liberator.plugins.feedKey.setup(["j","k","p","l","v","o","i","s"]);}, 0)');
+EOT
+
+js <<EOT
+(function(){
+ var feedPanel = document.createElement('statusbarpanel');
+ var feedButton = document.getElementById('feed-button');
+ feedPanel.setAttribute('id','feed-panel-clone');
+ feedPanel.appendChild(feedButton.cloneNode(true));
+ feedButton.parentNode.removeChild(feedButton);
+ document.getElementById('status-bar').insertBefore(feedPanel,document.getElementById('security-button'));
+})();
+EOT
+
+js <<EOT
+(function() {
+  liberator.modules.commands.addUserCommand(['hbinfo'], 'view hatena bookmark',
+    function(arg, special) {
+      var url = window._content.top.location;
+      window.loadURI('http://b.hatena.ne.jp/entry/' + url);
+    },
+    {}
+  );
+})();
+EOT
+
+javascript <<EOM
+liberator.globalVariables.proxy_settings = [
+   {
+      conf_name: 'disable',
+      conf_usage: 'direct connection',
+      settings: [
+      {
+         label: 'type',
+         param: 0
+      }
+      ]
+   },
+   {
+      conf_name: 'local',
+      conf_usage: 'use local cache proxy',
+      settings: [
+      {
+         label: 'type',
+         param: 1
+      },
+      {
+         label: 'http',
+         param: 'localhost'
+      },
+      {
+         label: 'http_port',
+         param: 8080
+      }
+      ]
+   }
+];
+EOM
+" vim: set ft=vimperator:

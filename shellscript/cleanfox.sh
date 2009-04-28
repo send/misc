@@ -14,7 +14,6 @@ while true ; do
   if [ -z "$ps" ] ; then
     break
   fi
-  kill $ps
   tried=`expr $tried + 1`
   if [ $tried -gt $try_limit ] ; then
     echo "exceeded retry limit"

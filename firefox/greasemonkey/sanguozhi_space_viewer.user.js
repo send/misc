@@ -8,9 +8,10 @@
 
 (function() {
   const resourceXPath = 'id("production2")/div[@class="floatInner"]/ul/li';
+  const soldierXPath = 'id("soldier")/div[@class="floatInner"]/ul/li';
   const targetXPath = 'id("mapOverlayMap")/area';
-  var map = $X(targetXPath, document);
 
+  var map = $X(targetXPath, document);
   map.forEach(function(elem) {
     var coord = hrefToCoord(elem.href);
     GM_xmlhttpRequest({
@@ -22,8 +23,13 @@
       },
       onload: function(xhr) {
         var responseDom = createDocument(xhr.responseText);
+
+        var soldiers = $X(soldierXPath, responseDom);
+        soldiers && soldiers.forEach(function(el) {
+          elem.title += ', ' + el.textContent;
+        });
+
         var results = $X(resourceXPath, responseDom);
-        console.log(results);
         results && results.forEach(function(el) {
           elem.title += ', ' + el.textContent;
         });

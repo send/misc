@@ -4,15 +4,11 @@
 // @description    Sanguozhi Space Viewer
 // @include        http://s1.3gokushi.jp/map.php*
 // @require        http://gist.github.com/3238.txt#$X
+// @require        http://www.json.org/json2.js
 // ==/UserScript==
 
 (function() {
 
-  if (typeof JSON == 'undefined') { 
-    Components.util.import("resource://gre/modules/JSON.jsm");
-    JSON.parse = JSON.fromString;
-    JSON.stringify = JSON.toString;
-  }
   const resourceXPath = 'id("production2")/div[@class="floatInner"]/ul/li';
   const soldierXPath = 'id("soldier")/div[@class="floatInner"]/ul/li';
   const targetXPath = 'id("mapOverlayMap")/area';

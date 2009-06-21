@@ -2,7 +2,7 @@
 // @name           Sanguozhi_space_viewer
 // @namespace      http://d.hatena.ne.jp/send/
 // @description    Sanguozhi Space Viewer
-// @include        http://s1.3gokushi.jp/map.php?*
+// @include        http://s1.3gokushi.jp/map.php*
 // @require        http://gist.github.com/3238.txt#$X
 // ==/UserScript==
 
@@ -48,12 +48,10 @@
           });
           mapInfo[coord.hashCode] = elem.title;
           GM_setValue('mapInfo', JSON.stringify(mapInfo));
-          console.log('xhr end:' + coord.hashCode);
         }
       });
     } else {
       elem.title = mapInfo[coord.hashCode];
-      console.log('get value:' + coord.hashCode);
     }
   }); 
   

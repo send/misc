@@ -7,7 +7,8 @@
 // ==/UserScript==
 
 (function() {
-  if (typeof JSON == 'undefined') {
+
+  if (typeof JSON == 'undefined') { 
     Components.util.import("resource://gre/modules/JSON.jsm");
     JSON.parse = JSON.fromString;
     JSON.stringify = JSON.toString;
@@ -32,7 +33,7 @@
         url: coord.url,
         onerror: function (xhr) {
           console.log("status: " + xhr.status);
-          console.log("statusText: " + xhr.statusText);
+          console.log("status Text: " + xhr.statusText);
         },
         onload: function(xhr) {
           var responseDom = createDocument(xhr.responseText);

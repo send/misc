@@ -7,35 +7,58 @@
 // ==/UserScript==
 
 (function() {
+  if (typeof JSON == 'undefined') {
+    Components.util.import("resource://gre/modules/JSON.jsm");
+    JSON.parse = JSON.fromString;
+    JSON.stringify = JSON.toString;
+  }
   const resourceXPath = 'id("production2")/div[@class="floatInner"]/ul/li';
   const soldierXPath = 'id("soldier")/div[@class="floatInner"]/ul/li';
   const targetXPath = 'id("mapOverlayMap")/area';
 
+  var mapInfo = GM_getValue('mapInfo');
+  if (!mapInfo) {
+    mapInfo = {};
+  } else {
+    mapInfo = JSON.parse(mapInfo);
+  }
+
   var map = $X(targetXPath, document);
   map.forEach(function(elem) {
     var coord = hrefToCoord(elem.href);
-    GM_xmlhttpRequest({
-      method: 'GET',
-      url: coord.url,
-      onerror: function (xhr) {
-        console.log("status: " + xhr.status);
-        console.log("statusText: " + xhr.statusText);
-      },
-      onload: function(xhr) {
-        var responseDom = createDocument(xhr.responseText);
-
-        var soldiers = $X(soldierXPath, responseDom);
-        soldiers && soldiers.forEach(function(el) {
-          elem.title += ', ' + el.textContent;
-        });
-
-        var results = $X(resourceXPath, responseDom);
-        results && results.forEach(function(el) {
-          elem.title += ', ' + el.textContent;
-        });
-      }
-    });
+    if (!mapInfo[coord.hashCode]) {
+      GM_xmlhttpRequest({
+        method: 'GET',
+        url: coord.url,
+        onerror: function (xhr) {
+          console.log("status: " + xhr.status);
+          console.log("statusText: " + xhr.statusText);
+        },
+        onload: function(xhr) {
+          var responseDom = createDocument(xhr.responseText);
+  
+          var soldiers = $X(soldierXPath, responseDom);
+          soldiers && soldiers.forEach(function(el) {
+            elem.title += ', ' + el.textContent;
+          });
+  
+          var results = $X(resourceXPath, responseDom);
+          results && results.forEach(function(el) {
+            elem.title += ', ' + el.textContent;
+          });
+          mapInfo[coord.hashCode] = elem.title;
+          GM_setValue('mapInfo', JSON.stringify(mapInfo));
+          console.log('xhr end:' + coord.hashCode);
+        }
+      });
+    } else {
+      elem.title = mapInfo[coord.hashCode];
+      console.log('get value:' + coord.hashCode);
+    }
   }); 
+  
+
+  /** Utilities **/
   function hrefToCoord(href) {
     var query = href.split('?')[1].split('&');
     return new Coord(query[0].split('=')[1], query[1].split('=')[1]);
@@ -45,7 +68,8 @@
     const linkTo = 'http://' +  location.host + '/land.php?';
     this.x = x;
     this.y = y;
-    this.url = linkTo + 'x=' + x + '&y=' + y;
+    this.hashCode = 'x=' + x + '&y=' + y;
+    this.url = linkTo + this.hashCode;
   }
 
   function createDocument(str) {

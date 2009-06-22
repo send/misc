@@ -23,7 +23,9 @@
   var map = $X(targetXPath, document);
   map.forEach(function(elem) {
     var coord = hrefToCoord(elem.href);
-    if (!mapInfo[coord.hashCode]) {
+    var now = new Date().getTime();
+    var info = mapInfo[coord.hashCode];
+    if (!info || !info.lastModified || now - info.lastModified > 86400000) {
       GM_xmlhttpRequest({
         method: 'GET',
         url: coord.url,
@@ -43,12 +45,15 @@
           results && results.forEach(function(el) {
             elem.title += ', ' + el.textContent;
           });
-          mapInfo[coord.hashCode] = elem.title;
+          mapInfo[coord.hashCode] = {
+            data: elem.title,
+            lastModified: new Date().getTime()
+          }
           GM_setValue('mapInfo', JSON.stringify(mapInfo));
         }
       });
     } else {
-      elem.title = mapInfo[coord.hashCode];
+      elem.title = info.data;
     }
   }); 
   

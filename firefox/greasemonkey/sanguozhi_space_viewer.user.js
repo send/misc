@@ -13,11 +13,25 @@
   const soldierXPath = 'id("soldier")/div[@class="floatInner"]/ul/li';
   const targetXPath = 'id("mapOverlayMap")/area';
 
+  var viewer = document.createElement('div');
+  viewer.id = 'space-viewer';
+  var before = document.getElementById('mapScroll');
+  before.parentNode.insertBefore(viewer,before);
+  document.getElementById('datas').style.top = '20px';
+
   var mapInfo = GM_getValue('mapInfo');
   if (!mapInfo) {
     mapInfo = {};
   } else {
     mapInfo = JSON.parse(mapInfo);
+  }
+
+  var old_mapInfoView = unsafeWindow.mapInfoView;
+  unsafeWindow.mapInfoView = function() {
+    var c = arguments[3].replace(/\(|\)/g,'').split(',');
+    var coord = new Coord(c[0],c[1]);
+    viewer.innerHTML = mapInfo[coord.hashCode].data;
+    return old_mapInfoView.apply(this,Array.prototype.slice.call(arguments));
   }
 
   var map = $X(targetXPath, document);

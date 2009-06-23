@@ -35,10 +35,13 @@
   }
 
   var map = $X(targetXPath, document);
+  var pos = 0;
+  const overImage = 'http://img.3gokushi.jp/20090611-01/img/common/panel_rollover.png';
+  var now = new Date().getTime();
   map.forEach(function(elem) {
     var coord = hrefToCoord(elem.href);
-    var now = new Date().getTime();
     var info = mapInfo[coord.hashCode];
+    pos++;
     if (!info || !info.lastModified || now - info.lastModified > 86400000) {
       GM_xmlhttpRequest({
         method: 'GET',
@@ -59,6 +62,7 @@
           results && results.forEach(function(el) {
             elem.title += ', ' + el.textContent;
           });
+          addStarStyle(elem);
           mapInfo[coord.hashCode] = {
             data: elem.title,
             lastModified: new Date().getTime()
@@ -68,8 +72,28 @@
       });
     } else {
       elem.title = info.data;
+      addStarStyle(elem);
     }
   }); 
+  
+  function addStarStyle(elem) {
+    var star = elem.title.match(/\u2605/g);
+    var count = (star) ? star.length : 0;
+    console.log("star:" + count);
+    var border;
+    switch(count) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      break;
+    default:
+      var img = document.createElement('img');
+      img.src = overImage;
+      img.className = (pos < 10) ? "mapAll0" + pos : "mapAll" + pos;
+      document.getElementById('mapsAll').appendChild(img);
+    }
+  }
   
 
   /** Utilities **/

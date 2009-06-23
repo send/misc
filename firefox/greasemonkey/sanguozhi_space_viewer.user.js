@@ -42,6 +42,7 @@
     var coord = hrefToCoord(elem.href);
     var info = mapInfo[coord.hashCode];
     pos++;
+    var currrent = pos;
     if (!info || !info.lastModified || now - info.lastModified > 86400000) {
       GM_xmlhttpRequest({
         method: 'GET',
@@ -62,7 +63,7 @@
           results && results.forEach(function(el) {
             elem.title += ', ' + el.textContent;
           });
-          addStarStyle(elem);
+          addStarStyle(elem, currrent);
           mapInfo[coord.hashCode] = {
             data: elem.title,
             lastModified: new Date().getTime()
@@ -72,15 +73,13 @@
       });
     } else {
       elem.title = info.data;
-      addStarStyle(elem);
+      addStarStyle(elem, currrent);
     }
   }); 
   
-  function addStarStyle(elem) {
+  function addStarStyle(elem, position) {
     var star = elem.title.match(/\u2605/g);
     var count = (star) ? star.length : 0;
-    console.log("star:" + count);
-    var border;
     switch(count) {
     case 0:
     case 1:
@@ -90,7 +89,7 @@
     default:
       var img = document.createElement('img');
       img.src = overImage;
-      img.className = (pos < 10) ? "mapAll0" + pos : "mapAll" + pos;
+      img.className = (position < 10) ? "mapAll0" + position : "mapAll" + position;
       document.getElementById('mapsAll').appendChild(img);
     }
   }

@@ -2,7 +2,7 @@
 // @name           Sanguozhi_space_viewer
 // @namespace      http://d.hatena.ne.jp/send/
 // @description    Sanguozhi Space Viewer
-// @include        http://s1.3gokushi.jp/map.php*
+// @include        http://s*.3gokushi.jp/map.php*
 // @require        http://gist.github.com/3238.txt#$X
 // @require        http://www.json.org/json2.js
 // ==/UserScript==

@@ -44,7 +44,8 @@ Cron.prototype.REGEXP_CRON = new RegExp(
 );
 
 Cron.prototype.initialize = function() {
-  this.tasks = [];
+  this.tasks = {};
+  this.counter = 0;
   return this;
 }
 
@@ -137,20 +138,20 @@ Cron.prototype.parse = function(cronfield) {
   ];
 }
 Cron.prototype.register = function (fn, spec) {
-  var id = this.tasks.length;
+  var id = this.counter;
   if (id == 0) this.wakeUp();
   var sp = this.parse(spec);
-  this.tasks.push({
+  this.tasks['_' + id] = {
     callback: fn,
     timespec: sp
-  });
+  };
+  this.counter++;
   return id;
 }
 Cron.prototype.exec = function () {
-  if (this.tasks.length == 0) return;
   var now = new Date();
   var currents = [now.getSeconds(), now.getMinutes(), now.getHours(), now.getDate(), now.getMonth(), now.getDay()];
-  for(var i = 0, length = this.tasks.length; i < length; i++) {
+  for(var i in this.tasks) if (this.tasks.hasOwnProperty(i)) {
     var spec = this.tasks[i];
     var matched = true;
     for (var l = 0, len = currents.length; l < len; l++) {
@@ -161,10 +162,13 @@ Cron.prototype.exec = function () {
     }
     if (matched) spec.callback.apply();
   }
+  return this;
 }
 Cron.prototype.cancel = function(id) {
-  this.tasks.splice(id,1);
-  if (this.tasks.length == 0) this.shutdown();
+  delete this.tasks['_' + id];
+  for (var i in this.tasks) if (this.tasks.hasOwnProperty(i)) return this;
+  this.shutdown();
+  return this;
 }
 
 /**

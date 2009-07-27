@@ -139,7 +139,13 @@ Cron.prototype.parse = function(cronfield) {
 }
 Cron.prototype.register = function (fn, spec) {
   var id = this.counter;
-  if (id == 0) this.wakeUp();
+  var awaked = false;
+  for (var i in this.tasks) if (this.tasks.hasOwnProperty(i)) {
+    awaked = true;
+    break;
+  }
+  if (awaked) this.wakeUp();
+
   var sp = this.parse(spec);
   this.tasks['_' + id] = {
     callback: fn,

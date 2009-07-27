@@ -1,9 +1,21 @@
-function Cron(interval) {
+if (!Array.prototype.indexOf) {
+  Array.prototype.indexOf = function (elt /* , from */) {
+    var len = this.length;
+    var from = Number(arguments[1]) || 0;
+    from = (from < 0) ? Math.ceil(from) : Math.floor(from);
+    if (from < 0) from += len;
+    for (;from < len; from++) {
+      if (from in this && this[from] === elt) return from;
+    }
+    return -1;
+  }
+}
+
+function Cron() {
   var self = arguments.callee;
   if (self.instance == null) {
+    this.initialize.apply(this, arguments);
     self.instance = this;
-    self.items = [];
-    self.prototype.init.apply(null,interval);
   }
   return self.instance;
 }
@@ -25,100 +37,145 @@ Cron.prototype.REGEXP_CRON = new RegExp(
     Cron.prototype.REGEXP_NUMBER,
     Cron.prototype.REGEXP_NUMBER,
     Cron.prototype.REGEXP_NUMBER,
+    Cron.prototype.REGEXP_NUMBER,
     Cron.prototype.REGEXP_MONTH,
     Cron.prototype.REGEXP_WEEKDAY
   ].join(' ') + '$', 'i'
 );
 
-Cron.prototype.init = function() {
-  var self = this;
-//  this.pid = setInterval(function() {
-//    self.action.apply(null, self.envs);
-//  }, interval || 1000);
+Cron.prototype.initialize = function() {
+  this.tasks = [];
   return this;
 }
 
+Cron.prototype.wakeUp = function() {
+  var self = this;
+  this.pid = setInterval(function() {
+    self.exec.apply(self);
+  },1000);
+}
+Cron.prototype.shutdown = function() {
+  clearInterval(this.pid);
+}
+
 Cron.prototype.parse = function(cronfield) {
+  function expandAsterisk(max) {
+    var expando = [];
+    for(var i = 0; i < max; i++) expando.push(i);
+    return expando;
+  }
+
+  function expandInterval(spec, max) {
+    var expando = [];
+    var sp = spec.split('/');
+    if (sp.length != 2) throw "illigal spec: " + spec;
+
+    var interval = parseInt(sp[1]);
+    if (interval <= 0) throw "illigal spec: " + spec;
+    var range;
+    if (sp[0].charAt(0) == '*') {
+      range = [0, max - 1];
+    } else {
+      range = sp[0].split('-');
+      range = [parseInt(range[0]), parseInt(range[1])];
+    }
+    if (range.length != 2 || range[0] > range[1]) throw "illigal spec: " + spec; 
+
+    for (var pos = range[0], max = range[1]; pos <= max; pos += interval) expando.push(pos);
+    return expando;
+  }
+
+  function expandRange(spec, max) {
+    var expando = [];
+    var range = spec.split('-');
+    range = [parseInt(range[0]), parseInt(range[1])];
+
+    if (range[0] < 0 || range[1] > max) throw "illigal spec: " + spec;
+
+    for (var i = range[0], rangeMax = range[1]; i <= rangeMax; i++) expando.push(i);
+    return expando;
+  }
+
+  function expand(spec, max) {
+    var expando = [];
+    var intValue = parseInt(spec);
+    if (typeof spec == 'number') {
+      expando.push(spec);
+     } else if (spec.indexOf(',') != -1) {
+      var specs = spec.split(',');
+      for (var i = 0, length = specs.length; i < length; i++)
+        expando = expando.concat(expand(specs[i], max));
+    } else if (spec.indexOf('/') != -1) {
+      expando = expando.concat(expandInterval(spec, max));
+    } else if (spec.indexOf('-') != -1) {
+      expando = expando.concat(expandRange(spec, max));
+    } else if (spec == '*') {
+      expando = expando.concat(expandAsterisk(max));
+    } else if (intValue >= 0 && intValue <= max) {
+      expando.push(intValue);
+    } else {
+      throw "illigal spec: " + spec;
+    }
+    return expando;
+  }
+
   var timespec = this.REGEXP_CRON.exec(cronfield);
   if (!timespec) throw 'illigal arguments: ' + cronfield;
   timespec.shift();
-  var month = this.month_mapping.indexOf(timespec[3].toLowerCase());
-  var weekday = this.week_mapping.indexOf(timespec[4].toLowerCase());
-  if (month != -1) timespec[3] = month;
-  if (weekday != -1) timespec[4] = weekday;
-  if (timespec[4] == 7) timespec[4] = 0;
+  var month = this.month_mapping.indexOf(timespec[4].toLowerCase());
+  var weekday = this.week_mapping.indexOf(timespec[5].toLowerCase());
+  if (month != -1) timespec[4] = month;
+  if (weekday != -1) timespec[5] = weekday;
+  if (timespec[5] == 7) timespec[5] = 0;
   return [
-    { figure: 60, code: timespec[0] },  // seconds
-    { figure: 60, code: timespec[1] },  // minutes
-    { figure: 24, code: timespec[2] },  // hours
-    { figure: 12, code: timespec[3] },  // month
-    { figure:  7, code: timespec[4] }   // weekday
+    expand(timespec[0], 60), // seconds
+    expand(timespec[1], 60), // minutes
+    expand(timespec[2], 24), // hours
+    expand(timespec[3], 31), // day
+    expand(timespec[4], 12), // month
+    expand(timespec[5], 7) // weekday
   ];
 }
-Cron.prototype.register = function (timespec, callback) {
+Cron.prototype.register = function (fn, spec) {
+  var id = this.tasks.length;
+  if (id == 0) this.wakeUp();
+  var sp = this.parse(spec);
+  this.tasks.push({
+    callback: fn,
+    timespec: sp
+  });
+  return id;
 }
-Cron.prototype.nextTime = function (timespec) {
-  function isList(field) {
-    return field.indexOf(',') != -1;
-  }
-  function fieldToList(field) {
-    return field.split(',');
-  }
-  function isRange(field) {
-    return field.indexOf('-') != -1;
-  }
-  function inRange(field, value) {
-    var range = field.split('-');
-    return (range[0] <= value && range[1] >= value);
-  }
-
+Cron.prototype.exec = function () {
+  if (this.tasks.length == 0) return;
   var now = new Date();
-  var currents = [ now.getMinutes(), now.getHour(), now.getDate(), now.getMonth(), now.getDay(), now.getYear() ];
-  var carry = false;
-  var specs = this.parse(timespec);
-
-  var __next = function(spec, current) {
-    var old = current;
-    if (spec.code = '*') {
-      current++;
-      if (current >= spec.figure) {
-        current %= spec.figure;
-        carry = true;
+  var currents = [now.getSeconds(), now.getMinutes(), now.getHours(), now.getDate(), now.getMonth(), now.getDay()];
+  for(var i = 0, length = this.tasks.length; i < length; i++) {
+    var spec = this.tasks[i];
+    var matched = true;
+    for (var l = 0, len = currents.length; l < len; l++) {
+      if (spec.timespec[l].indexOf(currents[l]) == -1) {
+        matched = false;
+        break;
       }
-    } else if (isRange(spec.code)) {
-      current++;
-      if (!inRange(spec.code, current)) {
-        var range = spec.code.split('-');
-        if (range[1] < current) carry = true;
-        current = range[0];
-      }
-    } else if (isList(spec.code)) {
-      var list = fieldToList(spec.code);
-      for (var i = 0, length = list.length; i < length; i++) {
-        current = __next(spec, current);
-        if (!carry) break;
-      }
-    } else { //numaric
-      current = spec.code;
-      carry = true;
     }
-    return current;
+    if (matched) spec.callback.apply();
   }
-
-  // FIXME: last field: weekday, so must fix carry over year
-  WEEKDAY: for (var digit = 0, length = 5; digit < length; digit++) {
-    carry = false;
-    currents[digit] = __next(specs[digit], currents[digit]);
-    if (digit == 4 && carry) break WEEKDAY;
-    if (!carry) break;
-  }
-
-  if (carry) // carry year
-    currents[5] = currents[5] + 1;
-  return new Date(currents[5], currents[3], currents[2], currents[1], currents[0]);
+}
+Cron.prototype.cancel = function(id) {
+  this.tasks.splice(id,1);
+  if (this.tasks.length == 0) this.shutdown();
 }
 
-print(new Cron().parse('* * * * *'));
-print(new Cron().parse('*/2 * * * 7'));
-print(new Cron().parse('* * * * sun'));
-print(new Cron().parse('* * * JUL sun'));
+/**
+console.log(new Date());
+var timer = new Cron();
+var pid = timer.register(function() {
+  console.log(new Date());
+}, "1,3,10-15,20-59/5 0-33/1,35-37,40-59 * * JUL mon");
+
+setTimeout(function() {
+  console.log('cancel: ' + pid);
+  timer.cancel(pid);
+},10000);
+*/

@@ -102,7 +102,7 @@ Cron.prototype.parse = function(cronfield) {
     var intValue = parseInt(spec);
     if (typeof spec == 'number') {
       expando.push(spec);
-     } else if (spec.indexOf(',') != -1) {
+    } else if (spec.indexOf(',') != -1) {
       var specs = spec.split(',');
       for (var i = 0, length = specs.length; i < length; i++)
         expando = expando.concat(expand(specs[i], max));

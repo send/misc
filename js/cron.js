@@ -21,7 +21,7 @@ function Cron() {
 }
 
 Cron.prototype.month_mapping = [
-  'jun', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'
+  'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'
 ];
 Cron.prototype.week_mapping = [
   'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'

@@ -144,7 +144,7 @@ Cron.prototype.register = function (fn, spec) {
     awaked = true;
     break;
   }
-  if (awaked) this.wakeUp();
+  if (!awaked) this.wakeUp();
 
   var sp = this.parse(spec);
   this.tasks['_' + id] = {
@@ -166,7 +166,7 @@ Cron.prototype.exec = function () {
         break;
       }
     }
-    if (matched) spec.callback.apply();
+    if (matched) setTimeout(function() {spec.callback.apply();});
   }
   return this;
 }

@@ -176,7 +176,7 @@ module TwitterGrowler
             else
               data = Magick::Image.from_blob(content)
             end
-            data = data .first.crop_resized! 128, 128
+            data = data.first.crop_resized! 128, 128
 
             resized = data.to_blob
           rescue Exception

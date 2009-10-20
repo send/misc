@@ -198,7 +198,7 @@ module TwitterGrowler
           when Net::HTTPNotModified
             @cache[url][:content]
           else
-            self.request response['location'], headers, limit - 1
+            self.get response['location'], headers, limit - 1
           end
         else
           print "#{url}\n"

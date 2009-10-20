@@ -12,7 +12,7 @@ require 'growl'
 require 'RMagick'
 require 'thread'
 require 'json'
-# せんど,センド,send,一晃,かずあき,カズアキ,かずくん,かーくん,かじあき
+
 @@config = Pit.get("twitter.com", :require => {
   "screen_name" => "your twitter screen name",
   "password" => "your password",

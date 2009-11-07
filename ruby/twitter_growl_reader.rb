@@ -25,7 +25,7 @@ require 'json'
 module TwitterGrowler
   APP_NAME = "TwitterGrowler"
 
-  class App < OSX::NSObject
+  class App < NSObject
     DEFAULT_NOTIFICATIONS = [
       "normal", "noticed_users", "keywords"
     ]
@@ -160,10 +160,10 @@ module TwitterGrowler
           request = Net::HTTP::Get.new uri.request_uri, headers
           http.request request
         end
-        
+        no_cache = false
         case response
         when Net::HTTPSuccess
-          return response.body if
+          no_cache = true if
             NOCACHE_REGEX.match(response.header['Pragma']) or
             NOCACHE_REGEX.match(response.header['Cache-Control'])
 
@@ -180,13 +180,11 @@ module TwitterGrowler
 
             resized = data.to_blob
           rescue Exception
-            p url
-            p content
-            $@.each {|bt| print "#{bt}\n" }
+            p "invalid image #{url}"
             resized = content
           end
           content = NSImage.alloc.initWithData NSData.dataWithRubyString(resized)
-
+          return conten if no_cache
           @cache[url] = {}
           @cache[url][:content] = content
           @cache[url][:last_modified] = (response['Last-Modified'].nil?) ? Time.new.to_s : response['Last-Modified']

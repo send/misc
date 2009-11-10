@@ -91,6 +91,7 @@ module TwitterGrowler
       title = status['user']['screen_name'] + ' (' + CGI.unescapeHTML(status['user']['name']) + ')'
       type = DEFAULT_NOTIFICATIONS[0]
       desc = CGI.unescapeHTML status['text']
+      desc = '' if desc.nil? or desc.empty?
       context = { :id => status['id'], :screen_name => status['user']['screen_name'], :desc => desc }.to_json if
         !status['id'].nil? and !status['user'].nil? and !status['user'].empty? and
         !status['user']['screen_name'].nil? and !status['user']['screen_name'].empty?

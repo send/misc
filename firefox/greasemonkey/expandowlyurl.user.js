@@ -6,6 +6,7 @@
 // @require        http://gist.github.com/3238.txt#$X
 // ==/UserScript==
 
+// recommanded disable cookie(disable_owly_bar). SEE ALSO http://d.hatena.ne.jp/Cherenkov/20100102/p1
 (function() {
   $X("//a[starts-with(@href, 'http://ow.ly/')]", document).forEach(function(anchor) {
     expand(anchor);

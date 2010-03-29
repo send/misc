@@ -6,7 +6,7 @@
 // @require        http://gist.github.com/3238.txt#$X
 // ==/UserScript==
 
-// recommanded disable cookie(disable_owly_bar). SEE ALSO http://d.hatena.ne.jp/Cherenkov/20100102/p1
+// recommanded disable cookie(disable_owly_bar). SEE ALSO: http://d.hatena.ne.jp/Cherenkov/20100102/p1
 (function() {
   $X("//a[starts-with(@href, 'http://ow.ly/')]", document).forEach(function(anchor) {
     expand(anchor);
@@ -72,7 +72,6 @@
   function createDocument(str) {
     if (document.documentElement.nodeName != 'HTML') 
       return new DOMParser().parseFromString(str, 'application/xhtml+xml');
-    //return createHTMLDocument(str);;
     var docType = document.implementation.createDocumentType('html','//W3C//DTD XHTML 1.0 Transitional//EN', 
       'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd');
     var doc = document.implementation.createDocument(null, 'html', docType);
@@ -80,7 +79,7 @@
     range.selectNodeContents(document.documentElement);
     var text = '';
     try {
-      // remove error handler. because these handler runs on create fragment.
+      // remove error handler. because these handlers run on create fragment.
       text = str.replace(/onerror=\"[^\"]+\"/g, '');
     } catch (e) {
       // without try-catch some error occured.

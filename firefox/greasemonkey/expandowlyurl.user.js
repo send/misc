@@ -7,10 +7,8 @@
 // ==/UserScript==
 
 (function() {
-  console.log('start');
   $X("//a[starts-with(@href, 'http://ow.ly/')]", document).forEach(function(anchor) {
     var timer = setTimeout(function() {
-      console.log('XXXX:' + anchor.getAttribute('href'));
       if (timer) clearTimeout(timer);
       GM_xmlhttpRequest({
         method: 'GET',
@@ -18,12 +16,14 @@
         onload: function(xhr) {
           var dom = createDocument(xhr.responseText);
           var iframe = dom.getElementById('hootFrame');
-          console.log(iframe.getAttribute('src'));
+          if (!iframe) return;
           anchor.setAttribute('href', iframe.getAttribute('src'));
         }
       });
     },0);
   });
+
+  // this function from AutoPagerize
   function createDocument(str) {
     if (document.documentElement.nodeName != 'HTML') 
       return new DOMParser().parseFromString(str, 'application/xhtml+xml');

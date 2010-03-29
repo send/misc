@@ -7,38 +7,87 @@
 // ==/UserScript==
 
 (function() {
-  setTimeout(function() {
-    $X("//a[starts-with(@href, 'http://ow.ly/')]", document).forEach(function(anchor) {
-      var timer = setTimeout(function() {
-        if (timer) clearTimeout(timer);
-        GM_xmlhttpRequest({
-          method: 'GET',
-          url: anchor.getAttribute('href'),
-          onload: function(xhr) {
-            var dom = createDocument(xhr.responseText);
-            var iframe = dom.getElementById('hootFrame');
-            if (!iframe) return;
-            anchor.setAttribute('href', iframe.getAttribute('src'));
+  $X("//a[starts-with(@href, 'http://ow.ly/')]", document).forEach(function(anchor) {
+    expand(anchor);
+  });
+  document.addEventListener('DOMNodeInserted', function(event) {
+    switch(event.target.nodeType) {
+    case 1:
+    case 11:
+      $X("//a[starts-with(@href, 'http://ow.ly/')]", event.target).forEach(function(anchor) {
+        var anc = anchor;
+        var timer = window.setTimeout(function () {
+          if (timer) window.clearTimeout(timer);
+          expand(anc);
+        }, 0);
+      });
+      break;
+    default:
+      // do nothing
+    }
+  }, false, false);
+  function expand(anchor) {
+    var urlCache = GM_getValue('urlCache');
+    urlCache = (urlCache)? JSON.parse(urlCache): {};
+    var url = anchor.getAttribute('href');
+    if (!/^http:\/\/ow.ly\/[^\/]+$/.test(url)) {
+      return;
+    }
+    if (urlCache[url]) {
+      anchor.setAttribute('href', urlCache[url] );
+      return;
+    }
+    var anc = anchor;
+    GM_xmlhttpRequest({
+      method: 'GET',
+      url: url,
+      onerror: function(xhr) {
+        console.log(xhr.status);
+        console.log(xhr.statusText);
+      },
+      onload: function(xhr) {
+        if (!xhr.responseText && typeof xhr.responseText == 'string') return;
+        urlCache = GM_getValue('urlCache');
+        urlCache = (urlCache)? JSON.parse(urlCache): {};
+        if (!urlCache[url]) {
+          var dom;
+          try {
+            dom = createDocument(xhr.responseText);
+          } catch (e) {
+            console.log('error occured createDocument');
+            console.log(e);
+            return;
           }
-        });
-      },0);
+          var iframe = dom.getElementById('hootFrame');
+          if (!iframe) return;
+          urlCache[url] = iframe.getAttribute('src');
+          GM_setValue('urlCache', JSON.stringify(urlCache));
+        }
+        anc.setAttribute('href', urlCache[url]);
+      }
     });
-  },100);
-  // this function from AutoPagerize
+  }
+
   function createDocument(str) {
     if (document.documentElement.nodeName != 'HTML') 
       return new DOMParser().parseFromString(str, 'application/xhtml+xml');
-    var html = str.replace(/^[\s\S]*?<html(?:[ \t\r\n][^>]*)?>|<\/html[ \t\r\n]*>[\w\W]*$/ig, '');
-    var doc = document.implementation.createDocument(null, 'html', null);
+    //return createHTMLDocument(str);;
+    var docType = document.implementation.createDocumentType('html','//W3C//DTD XHTML 1.0 Transitional//EN', 
+      'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd');
+    var doc = document.implementation.createDocument(null, 'html', docType);
     var range = document.createRange();
-    range.setStartAfter(document.body);
-    var fragment = range.createContextualFragment(html);
+    range.selectNodeContents(document.documentElement);
+    var text = '';
     try {
-      fragment = doc.adoptNode(fragment);
+      // remove error handler. because these handler runs on create fragment.
+      text = str.replace(/onerror=\"[^\"]+\"/g, '');
     } catch (e) {
-      fragment = doc.importNode(fragment, true);
+      // without try-catch some error occured.
+      console.log(e);
     }
-    doc.documentElement.appendChild(fragment);
+    var fragment = range.createContextualFragment(text);
+    var content = doc.adoptNode(fragment);
+    doc.documentElement.appendChild(content);
     return doc;
   }
   

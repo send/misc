@@ -23,7 +23,7 @@
         });
       },0);
     });
-  },0);
+  },100);
   // this function from AutoPagerize
   function createDocument(str) {
     if (document.documentElement.nodeName != 'HTML') 

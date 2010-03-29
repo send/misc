@@ -7,22 +7,23 @@
 // ==/UserScript==
 
 (function() {
-  $X("//a[starts-with(@href, 'http://ow.ly/')]", document).forEach(function(anchor) {
-    var timer = setTimeout(function() {
-      if (timer) clearTimeout(timer);
-      GM_xmlhttpRequest({
-        method: 'GET',
-        url: anchor.getAttribute('href'),
-        onload: function(xhr) {
-          var dom = createDocument(xhr.responseText);
-          var iframe = dom.getElementById('hootFrame');
-          if (!iframe) return;
-          anchor.setAttribute('href', iframe.getAttribute('src'));
-        }
-      });
-    },0);
-  });
-
+  setTimeout(function() {
+    $X("//a[starts-with(@href, 'http://ow.ly/')]", document).forEach(function(anchor) {
+      var timer = setTimeout(function() {
+        if (timer) clearTimeout(timer);
+        GM_xmlhttpRequest({
+          method: 'GET',
+          url: anchor.getAttribute('href'),
+          onload: function(xhr) {
+            var dom = createDocument(xhr.responseText);
+            var iframe = dom.getElementById('hootFrame');
+            if (!iframe) return;
+            anchor.setAttribute('href', iframe.getAttribute('src'));
+          }
+        });
+      },0);
+    });
+  },0);
   // this function from AutoPagerize
   function createDocument(str) {
     if (document.documentElement.nodeName != 'HTML') 

@@ -6,6 +6,7 @@
 // ==/UserScript==
 (function() {
   var win = (typeof unsafeWindow != 'undefined') ? unsafeWindow : window;
+  
   var timer = setTimeout(function() {
     if (timer) clearTimeout(timer);
     if (typeof win.Hatena == 'undefined') {
@@ -16,7 +17,8 @@
   }, 0);
   function assistStar(event) {
     var node = event.target;
-    if (node.nodeType != 1 || node.tagName != 'LI') return;
-    win.Hatena.Star.EntryLoader.loadNewEntries(node.wrappedJSObject);
+    if (node.nodeType != 1 || !(node.tagName == 'LI' || node.tagName == 'DIV')) return;
+
+    win.Hatena.Star.EntryLoader.loadNewEntries(node);
   }
 })();

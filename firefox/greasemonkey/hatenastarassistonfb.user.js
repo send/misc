@@ -6,17 +6,17 @@
 // ==/UserScript==
 (function() {
   var win = (typeof unsafeWindow != 'undefined') ? unsafeWindow : window;
-  var Hatena, Ten;
   var timer = setTimeout(function() {
     if (timer) clearTimeout(timer);
-    if (typeof win.Hatena == 'undefined') return;
-    Hatena = win.Hatena;
-    Ten = win.Ten;
-    document.addEventListener("DOMNodeInserted", assistStar, false);
-  }, 100);
+    if (typeof win.Hatena == 'undefined') {
+      timer = setTimeout(arguments.callee, 100);
+    } else {
+      document.addEventListener("DOMNodeInserted", assistStar, false);
+    }
+  }, 0);
   function assistStar(event) {
     var node = event.target;
     if (node.nodeType != 1 || node.tagName != 'LI') return;
-    Hatena.Star.EntryLoader.loadNewEntries(node.wrappedJSObject);
+    win.Hatena.Star.EntryLoader.loadNewEntries(node.wrappedJSObject);
   }
 })();

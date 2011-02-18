@@ -1,5 +1,5 @@
 #!/opt/local/bin/ruby -Ku -rtime
-#
+
 require 'rubygems'
 require 'yaml'
 require 'net/http'
@@ -13,17 +13,26 @@ require 'RMagick'
 require 'thread'
 require 'json'
 
+#require 'ya2yaml'
+#$KCODE = 'utf8'
+#[Object, String, Array, Hash].each do |klass|
+#  klass.class_eval { alias to_yaml ya2yaml }
+#end
+
 @@config = Pit.get("twitter.com", :require => {
-  "screen_name" => "your twitter screen name",
-  "password" => "your password",
   "interval" => 45,
   "error_interval" => 180,
   "noticed_users" => "",
   "keywords" => "",
-  'fav_mode' => false
+  'fav_mode' => false,
+  'access_token' => '',
+  'access_token_secret' => '',
+  'screen_name' => ''
 })
 module TwitterGrowler
   APP_NAME = "TwitterGrowler"
+  CONSUMER_KEY = 'vuras9FGHoJvvFKcFniA'
+  CONSUMER_SECRET = '098HRzqfBlJjLhi1tfuJDtIOhZx9x0ilsA0gcMAoig'
 
   class App < NSObject
     DEFAULT_NOTIFICATIONS = [
@@ -39,7 +48,8 @@ module TwitterGrowler
       @last_notified = @last_fetch = Time.new
       @container = ImageContainer.new
       @icon =@container.get 'http://twitter.com/favicon.ico'
-      auth = Twitter::HTTPAuth.new @@config["screen_name"], @@config["password"]
+      auth = Twitter::OAuth.new CONSUMER_KEY, CONSUMER_SECRET
+      auth.authorize_from_access @@config['access_token'], @@config['access_token_secret']
       @client = Twitter::Base.new auth
       self
     end
@@ -56,35 +66,36 @@ module TwitterGrowler
 
     def run
       Thread.new { NSApplication.sharedApplication.run }
-      while true do
+      loop do
         begin
           if @since_id > 0
-            @timeline = @client.friends_timeline :since_id => @since_id 
+            timeline = @client.home_timeline :since_id => @since_id 
           else
-            @timeline = @client.friends_timeline
+            timeline = @client.home_timeline
           end
         rescue Exception
           $@.each {|bt| print "#{bt}\n" }
-          sleep @@config["error_interval"] if @timeline.nil?
+          sleep @@config["error_interval"] if timeline.nil?
           next
         end
         @last_fetch = Time.now
         time = nil
-        @timeline.reverse.each do |status|
+        timeline.reverse.each do |status|
           next unless status['user']
           @since_id = status['id'] if @since_id < status['id']
           @last_notified = time if  !time.nil? && time - @last_notified > 0
           time = Time.parse status['created_at']
           wait = (@last_notified == 0) ? 0 : time - @last_notified
           wait = 0.2 if wait < 0
-          wait = 2 if @last_fetch - time > @@config["interval"] && wait > 2
+          wait = 2 if ((@last_fetch - time) > @@config["interval"]) && (wait > 2)
           sleep wait
           self.notify status
         end
-
+        timeline = nil;
         timer = @@config["interval"] - (Time.now - @last_fetch)
         sleep timer if timer > 0
       end
+      
     end
 
     def notify status
@@ -92,10 +103,15 @@ module TwitterGrowler
       type = DEFAULT_NOTIFICATIONS[0]
       desc = CGI.unescapeHTML status['text']
       desc = '' if desc.nil? or desc.empty?
-      context = { :id => status['id'], :screen_name => status['user']['screen_name'], :desc => desc }.to_json if
-        !status['id'].nil? and !status['user'].nil? and !status['user'].empty? and
-        !status['user']['screen_name'].nil? and !status['user']['screen_name'].empty?
-
+      begin
+        context = { :id => status['id'], :screen_name => status['user']['screen_name'], :desc => "#{desc}" } if
+          !status['id'].nil? and !status['user'].nil? and !status['user'].empty? and
+          !status['user']['screen_name'].nil? and !status['user']['screen_name'].empty?
+      rescue Exception
+        $@.each {|bt| print "#{bt}\n" }
+        c = { :id => status['id'], :screen_name => status['user']['screen_name'], :desc => desc }
+        p c
+      end
       icon = @container.get status['user']['profile_image_url']
       sticky = false
       priority = 0
@@ -108,13 +124,14 @@ module TwitterGrowler
         end
       end
       @keywords.each do |keyword|
-        unless desc.index(keyword).nil?
+        #unless desc.index(keyword).nil?
+        unless /#{keyword}/i.match(desc).nil?
           sticky= true
           priority = 2
           break
         end
       end
-      if status['in_reply_to_user_id'] == @@config['screen_name']
+      if status['in_reply_to_screen_name'] == @@config['screen_name']
         sticky = true
         priority = 2
       end
@@ -122,7 +139,8 @@ module TwitterGrowler
     end
 
     def growlNotifierClicked_context sender, clicked_context
-      context = JSON.parse clicked_context
+      #context = JSON.parse clicked_context
+      context = clicked_context
       if @@config["fav_mode"]
         @client.favorite_create context["id"]
       else

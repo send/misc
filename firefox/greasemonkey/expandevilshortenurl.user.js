@@ -75,19 +75,20 @@
     var docType = document.implementation.createDocumentType('html','//W3C//DTD XHTML 1.0 Transitional//EN', 
       'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd');
     var doc = document.implementation.createDocument(null, 'html', docType);
+//    var doc = document.implementation.createDocument(null, 'html', null);
     var range = document.createRange();
     range.selectNodeContents(document.documentElement);
-    var text = '';
+    //var text = '';
     try {
       // remove error handler. because these handlers run on create fragment.
-      text = str.replace(/onerror=\"[^\"]+\"/g, '');
+//    var  text = str.replace(/onerror=\"[^\"]+\"/g, '');
+    var fragment = range.createContextualFragment(str);
+    var content = doc.adoptNode(fragment);
+    doc.documentElement.appendChild(content);
     } catch (e) {
       // without try-catch some error occured.
       console.log(e);
     }
-    var fragment = range.createContextualFragment(text);
-    var content = doc.adoptNode(fragment);
-    doc.documentElement.appendChild(content);
     return doc;
   }
   

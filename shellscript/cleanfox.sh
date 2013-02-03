@@ -27,8 +27,8 @@ for dir in $home/Library/Application\ Support/Firefox/Profiles/*  $home/Library/
   if [ -d "$dir" ] ; then
     cd "$dir"
     for f in *.sqlite ; do
-      $sqlite $f vacuum .exit
-      $sqlite $f reindex .exit
+      $sqlite $f vacuum
+      $sqlite $f reindex
     done
   fi
 done

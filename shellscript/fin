@@ -1,0 +1,4 @@
+#!/bin/sh
+GROWL=/usr/local/bin/growlnotify
+
+$@ && $GROWL -t fin -m "$1 finished" -s -p 2

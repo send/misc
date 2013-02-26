@@ -1,4 +1,4 @@
 #!/bin/sh
 GROWL=/usr/local/bin/growlnotify
 
-$@ && $GROWL -t fin -m "$1 finished" -s -p 2
+$@ && $GROWL -t fin -m "$1 succeeded" -s -p -1 || $GROWL -t fin -m "$1 failed" -s -p 2

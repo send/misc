@@ -1,0 +1,12 @@
+#!/bin/sh
+while true ; do
+  STATUS=`curl -LI ${1} -o /dev/null -w '%{http_code}\n' -s`
+  if [ "${STATUS}" -eq "200" ]; then
+    growlnotify -t 'site status' -m "${1}: ${STATUS}" -s -p -1
+    break
+  else
+    growlnotify -t 'site status' -m "${1} ${STATUS}" -p 2
+  fi
+  sleep 60
+done
+
